@@ -17,6 +17,7 @@ import os
 os.environ['FONTCONFIG_PATH'] = '/opt/fonts'
 
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 
 def remove_tmpfiles():
     for filename in os.listdir('/tmp'):
@@ -64,11 +65,23 @@ class ChromelessServer():
 
     def gen_chrome(self, options, dirname):
         if options is None:
-            options = get_default_options(dirname)
+            options = get_default_chrome_options(dirname)
         
         chromedriver=ChromeDriverManager(path="/tmp/chromedriver").install()
 
         return webdriver.Chrome(chromedriver, options=options)
+
+    def gen_firefox(self, options, dirname):
+        if options is None:
+            options = get_default_firefox_options(dirname)
+        
+        geckodriver = GeckoDriverManager(path="/tmp/geckodriver").install()
+        profile = webdriver.FirefoxProfile(profile_directory=dirname)
+
+        return webdriver.Firefox(
+            firefox_profile = profile,
+            executable_path  = geckodriver,
+            options=options)
 
     def parse_code(self, code, name):
         inspected, marshaled = code
@@ -93,13 +106,13 @@ class ChromelessServer():
         arg = arguments["arg"]
         kw = arguments["kw"]
         options = arguments["options"]
-        chrome = self.gen_chrome(options, dirname)
+        browser = self.gen_chrome(options, dirname)
         for name, code in codes.items():
             func = self.parse_code(code, name)
-            setattr(chrome, name, types.MethodType(func, chrome))
+            setattr(browser, name, types.MethodType(func, browser))
         metadata = {'status': 'success'}
         try:
-            response = getattr(chrome, invoked_func_name)(*arg, **kw)
+            response = getattr(browser, invoked_func_name)(*arg, **kw)
         except Exception:
             metadata['status'] = 'error'
             response = "\n".join([
@@ -108,26 +121,37 @@ class ChromelessServer():
                 "============== CHROMELESS TRACEBACK IN LAMBDA END ================\n",
             ])
         finally:
-            chrome.quit()
+            browser.quit()
         return dumps((response, metadata))
 
 
-def get_default_options(dirname):
+def get_default_firefox_options(dirname):
+    firefox_options = webdriver.FirefoxOptions()
+    firefox_options.add_argument("-headless")
+    firefox_options.add_argument("-safe-mode")
+    firefox_options.add_argument('-width 2560')
+    firefox_options.add_argument('-height 1440')
+
+    return firefox_options
+def get_default_chrome_options(dirname):
     options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("headless")
-    options.add_argument("--headless")
     options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1280x1696")
-    options.add_argument("--disable-application-cache")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-infobars")
-    options.add_argument("--hide-scrollbars")
-    options.add_argument("enable-automation")
+    options.add_argument("--disable-dev-tools")
+    options.add_argument("--no-zygote")
+    options.add_argument("--single-process")
+    options.add_argument("window-size=2560x1440") # https://github.com/aws-samples/serverless-ui-testing-using-selenium/blob/5454ea9ddc13a0f1ad397d9c22f1e4db58fc39fc/app.py#L66
+    # options.add_argument("--disable-application-cache")
+    # options.add_argument("--disable-extensions")
+    # options.add_argument("--disable-infobars")
+    # options.add_argument("--hide-scrollbars")
+    
+    #options.add_argument("enable-automation")
     #options.add_argument("--enable-logging")
     #options.add_argument("--log-level=0") # Invalid log-level value
-    options.add_argument("--single-process")
+
     options.add_argument("--ignore-certificate-errors")
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument("--homedir=" + dirname)
