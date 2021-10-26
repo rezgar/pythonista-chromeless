@@ -2,6 +2,9 @@ import os
 import shutil
 import types
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from picklelib import loads, dumps  # imports in Dockerfile
 import json
 import marshal
@@ -13,6 +16,7 @@ from tempfile import TemporaryDirectory
 import os
 os.environ['FONTCONFIG_PATH'] = '/opt/fonts'
 
+from webdriver_manager.chrome import ChromeDriverManager
 
 def remove_tmpfiles():
     for filename in os.listdir('/tmp'):
@@ -61,9 +65,10 @@ class ChromelessServer():
     def gen_chrome(self, options, dirname):
         if options is None:
             options = get_default_options(dirname)
-        options.binary_location = "/opt/bin/headless-chromium"
-        return webdriver.Chrome(
-            "/opt/bin/chromedriver", options=options)
+        
+        chromedriver=ChromeDriverManager(path="/tmp/chromedriver").install()
+
+        return webdriver.Chrome(chromedriver, options=options)
 
     def parse_code(self, code, name):
         inspected, marshaled = code
@@ -109,18 +114,22 @@ class ChromelessServer():
 
 def get_default_options(dirname):
     options = webdriver.ChromeOptions()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("headless")
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1280x1696")
     options.add_argument("--disable-application-cache")
+    options.add_argument("--disable-extensions")
     options.add_argument("--disable-infobars")
-    options.add_argument("--no-sandbox")
     options.add_argument("--hide-scrollbars")
-    options.add_argument("--enable-logging")
-    options.add_argument("--log-level=0")
+    options.add_argument("enable-automation")
+    #options.add_argument("--enable-logging")
+    #options.add_argument("--log-level=0") # Invalid log-level value
     options.add_argument("--single-process")
     options.add_argument("--ignore-certificate-errors")
-    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--remote-debugging-port=9222")
     options.add_argument("--homedir=" + dirname)
     options.add_argument(f"--user-data-dir={dirname}/user-data")
     options.add_argument(f"--data-path={dirname}/data-path")
