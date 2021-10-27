@@ -5,7 +5,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium_stealth import stealth
+
 from picklelib import loads, dumps  # imports in Dockerfile
+
 import json
 import marshal
 import textwrap
@@ -111,6 +114,16 @@ class ChromelessServer():
         kw = arguments["kw"]
         options = arguments["options"]
         browser = self.gen_chrome(options, dirname)
+
+        stealth(browser,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+        )
+
         for name, code in codes.items():
             func = self.parse_code(code, name)
             setattr(browser, name, types.MethodType(func, browser))
@@ -151,16 +164,7 @@ def get_default_chrome_options(dirname):
     options.add_argument("--window-size=1600,1024") # https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md#window--screen-management
     
     options.add_argument("--enable-automation")
-    # options.add_argument("--disable-application-cache")
-    # options.add_argument("--disable-extensions")
-    # options.add_argument("--hide-scrollbars")
-    # options.add_argument("--disable-infobars")  #
-    
     options.add_argument("--ignore-certificate-errors")
-
-    #options.add_argument("--enable-logging")
-    #options.add_argument("--log-level=0") # Invalid log-level value
-
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument(f"--user-data-dir={dirname}/user-data")
     options.add_argument("--homedir=" + dirname)
@@ -169,4 +173,7 @@ def get_default_chrome_options(dirname):
     options.add_argument(f"--disk-cache-size=104857600")
     options.add_argument(f"--profile-directory={dirname}/profile")
     options.add_argument(f"--quarantine-dir={dirname}/quarantine")
+
+    options.add_argument('--disable-web-security')
+    options.add_argument('--allow-running-insecure-content')
     return options
