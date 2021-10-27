@@ -48,15 +48,17 @@ def handler(event=None, context=None):
 def invoke(dumped):
     arg = loads(dumped)
     print(arg)
-    required_version = arg['REQUIRED_SERVER_VERSION'] if isinstance(
-        arg, dict) else None
+    required_version = arg['REQUIRED_SERVER_VERSION'] if isinstance(arg, dict) else None
+    
     ChormelessServerClass = {
         2: ChromelessServer,  # latest
         1: ChromelessServerVer1,
         None: ChromelessServerVerNone,
     }[required_version]
+
     if required_version is None:
         arg = dumps(arg)  # dump again
+
     return ChormelessServerClass().recieve(arg)
 
 
@@ -80,8 +82,10 @@ class ChromelessServer():
 
         return webdriver.Firefox(
             firefox_profile = profile,
-            executable_path  = geckodriver,
-            options=options)
+            firefox_binary = '/usr/bin/firefox',
+            executable_path = geckodriver,
+            options=options,
+            service_log_path='/tmp/geckodriver.log')
 
     def parse_code(self, code, name):
         inspected, marshaled = code
@@ -137,25 +141,32 @@ def get_default_chrome_options(dirname):
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
+    #options.add_argument("--test-type=integration")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-dev-tools")
     options.add_argument("--no-zygote")
     options.add_argument("--single-process")
-    options.add_argument("window-size=2560x1440") # https://github.com/aws-samples/serverless-ui-testing-using-selenium/blob/5454ea9ddc13a0f1ad397d9c22f1e4db58fc39fc/app.py#L66
+    #options.add_argument("window-size=2560x1440") # https://github.com/aws-samples/serverless-ui-testing-using-selenium/blob/5454ea9ddc13a0f1ad397d9c22f1e4db58fc39fc/app.py#L66
+    options.add_argument("--window-size=1600,1024") # https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md#window--screen-management
+    
+    options.add_argument("--enable-automation")
     # options.add_argument("--disable-application-cache")
     # options.add_argument("--disable-extensions")
-    # options.add_argument("--disable-infobars")
     # options.add_argument("--hide-scrollbars")
+    # options.add_argument("--disable-infobars")  #
     
-    #options.add_argument("enable-automation")
+    options.add_argument("--ignore-certificate-errors")
+
     #options.add_argument("--enable-logging")
     #options.add_argument("--log-level=0") # Invalid log-level value
 
-    options.add_argument("--ignore-certificate-errors")
     options.add_argument("--remote-debugging-port=9222")
-    options.add_argument("--homedir=" + dirname)
     options.add_argument(f"--user-data-dir={dirname}/user-data")
+    options.add_argument("--homedir=" + dirname)
     options.add_argument(f"--data-path={dirname}/data-path")
     options.add_argument(f"--disk-cache-dir={dirname}/cache-dir")
+    options.add_argument(f"--disk-cache-size=104857600")
+    options.add_argument(f"--profile-directory={dirname}/profile")
+    options.add_argument(f"--quarantine-dir={dirname}/quarantine")
     return options
