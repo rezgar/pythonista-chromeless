@@ -4,7 +4,6 @@ from picklelib import loads, dumps  # imports in Dockerfile
 import marshal
 import textwrap
 
-
 class ChromelessServer():
     def gen_chrome(self, options):
         if options is None:

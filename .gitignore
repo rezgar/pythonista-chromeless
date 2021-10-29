@@ -3,3 +3,6 @@ node_modules
 package-lock.json
 package.json
 *.pyc
+*.log
+**/test.py
+lambda.zip

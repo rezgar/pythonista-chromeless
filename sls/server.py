@@ -2,7 +2,14 @@ import os
 import shutil
 import types
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium_stealth import stealth
+
 from picklelib import loads, dumps  # imports in Dockerfile
+
 import json
 import marshal
 import textwrap
@@ -11,8 +18,13 @@ from versions import ChromelessServerVer1
 import traceback
 from tempfile import TemporaryDirectory
 import os
+import re
+import time
+
 os.environ['FONTCONFIG_PATH'] = '/opt/fonts'
 
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 
 def remove_tmpfiles():
     for filename in os.listdir('/tmp'):
@@ -43,15 +55,17 @@ def handler(event=None, context=None):
 def invoke(dumped):
     arg = loads(dumped)
     print(arg)
-    required_version = arg['REQUIRED_SERVER_VERSION'] if isinstance(
-        arg, dict) else None
+    required_version = arg['REQUIRED_SERVER_VERSION'] if isinstance(arg, dict) else None
+    
     ChormelessServerClass = {
         2: ChromelessServer,  # latest
         1: ChromelessServerVer1,
         None: ChromelessServerVerNone,
     }[required_version]
+
     if required_version is None:
         arg = dumps(arg)  # dump again
+
     return ChormelessServerClass().recieve(arg)
 
 
@@ -60,10 +74,25 @@ class ChromelessServer():
 
     def gen_chrome(self, options, dirname):
         if options is None:
-            options = get_default_options(dirname)
-        options.binary_location = "/opt/bin/headless-chromium"
-        return webdriver.Chrome(
-            "/opt/bin/chromedriver", options=options)
+            options = get_default_chrome_options(dirname)
+        
+        chromedriver=ChromeDriverManager(path="/tmp/chromedriver").install()
+
+        return webdriver.Chrome(chromedriver, options=options)
+
+    def gen_firefox(self, options, dirname):
+        if options is None:
+            options = get_default_firefox_options(dirname)
+        
+        geckodriver = GeckoDriverManager(path="/tmp/geckodriver").install()
+        profile = webdriver.FirefoxProfile(profile_directory=dirname)
+
+        return webdriver.Firefox(
+            firefox_profile = profile,
+            firefox_binary = '/usr/bin/firefox',
+            executable_path = geckodriver,
+            options=options,
+            service_log_path='/tmp/geckodriver.log')
 
     def parse_code(self, code, name):
         inspected, marshaled = code
@@ -88,13 +117,23 @@ class ChromelessServer():
         arg = arguments["arg"]
         kw = arguments["kw"]
         options = arguments["options"]
-        chrome = self.gen_chrome(options, dirname)
+        browser = self.gen_chrome(options, dirname)
+
+        stealth(browser,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+        )
+
         for name, code in codes.items():
             func = self.parse_code(code, name)
-            setattr(chrome, name, types.MethodType(func, chrome))
+            setattr(browser, name, types.MethodType(func, browser))
         metadata = {'status': 'success'}
         try:
-            response = getattr(chrome, invoked_func_name)(*arg, **kw)
+            response = getattr(browser, invoked_func_name)(*arg, **kw)
         except Exception:
             metadata['status'] = 'error'
             response = "\n".join([
@@ -103,26 +142,42 @@ class ChromelessServer():
                 "============== CHROMELESS TRACEBACK IN LAMBDA END ================\n",
             ])
         finally:
-            chrome.quit()
+            browser.quit()
         return dumps((response, metadata))
 
 
-def get_default_options(dirname):
+def get_default_firefox_options(dirname):
+    firefox_options = webdriver.FirefoxOptions()
+    firefox_options.add_argument("-headless")
+    firefox_options.add_argument("-safe-mode")
+    firefox_options.add_argument('-width 2560')
+    firefox_options.add_argument('-height 1440')
+
+    return firefox_options
+def get_default_chrome_options(dirname):
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1280x1696")
-    options.add_argument("--disable-application-cache")
-    options.add_argument("--disable-infobars")
     options.add_argument("--no-sandbox")
-    options.add_argument("--hide-scrollbars")
-    options.add_argument("--enable-logging")
-    options.add_argument("--log-level=0")
-    options.add_argument("--single-process")
-    options.add_argument("--ignore-certificate-errors")
+    #options.add_argument("--test-type=integration")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--homedir=" + dirname)
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-dev-tools")
+    options.add_argument("--no-zygote")
+    options.add_argument("--single-process")
+    #options.add_argument("window-size=2560x1440") # https://github.com/aws-samples/serverless-ui-testing-using-selenium/blob/5454ea9ddc13a0f1ad397d9c22f1e4db58fc39fc/app.py#L66
+    options.add_argument("--window-size=1600,1024") # https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md#window--screen-management
+    
+    options.add_argument("--enable-automation")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--remote-debugging-port=9222")
     options.add_argument(f"--user-data-dir={dirname}/user-data")
+    options.add_argument("--homedir=" + dirname)
     options.add_argument(f"--data-path={dirname}/data-path")
     options.add_argument(f"--disk-cache-dir={dirname}/cache-dir")
+    options.add_argument(f"--disk-cache-size=104857600")
+    options.add_argument(f"--profile-directory={dirname}/profile")
+    options.add_argument(f"--quarantine-dir={dirname}/quarantine")
+
+    options.add_argument('--disable-web-security')
+    options.add_argument('--allow-running-insecure-content')
     return options
