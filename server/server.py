@@ -9,6 +9,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium_stealth import stealth
 
 from picklelib import loads, dumps  # imports in Dockerfile
+from helper import *
 
 import json
 import marshal
