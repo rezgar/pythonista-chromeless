@@ -39,12 +39,12 @@ RUN mkdir -p /opt/bin/ && \
     mv /tmp/downloads/fonts/NotoSansJP-Regular.otf /opt/fonts/ && \
     rm -rf /tmp/downloads
 
-COPY sls/requirements.txt ./
+COPY server/requirements.txt ./
 RUN pip install -r requirements.txt
 
-COPY sls/server.py ./
-COPY sls/helper.py ./
-COPY chromeless/picklelib.py ./
-COPY sls/fonts.conf /opt/fonts/
-COPY sls/versions/ ./versions/
+COPY server/server.py ./
+COPY server/helper.py ./
+COPY server/picklelib.py ./
+COPY server/fonts.conf /opt/fonts/
+COPY server/versions/ ./versions/
 CMD ["server.handler"]

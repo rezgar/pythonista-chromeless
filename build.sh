@@ -9,7 +9,7 @@ AWS_REGION=$(aws configure get region)
 
 echo "TEST LOCALLY"
 DOCKER_BUILDKIT=1 docker build -t chromeless .
-docker-compose -f sls/docker-compose.yml up --exit-code-from pytest --abort-on-container-exit
+docker-compose -f server/docker-compose.yml up --exit-code-from pytest --abort-on-container-exit
 
 echo "DEPLOY STAGING LAMBDA"
 sls deploy --stage stg --region $AWS_REGION

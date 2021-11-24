@@ -1,5 +1,4 @@
-from .chromeless import Chromeless
-from .picklelib import loads, dumps
+from .client import Chromeless, loads, dumps
 try:
     from .__version__ import __version__
 except Exception as e:

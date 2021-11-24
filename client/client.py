@@ -1,23 +1,35 @@
 import inspect
 import marshal
 import boto3
+import boto3.session
+import botocore
 import json
-from .picklelib import loads, dumps
 import sys
 import requests
 import os
 
+import pickle
+import zlib
+import base64
+
+def dumps(obj):
+    return base64.b64encode(zlib.compress(pickle.dumps(obj))).decode()
+
+def loads(obj):
+    return pickle.loads(zlib.decompress(base64.b64decode(obj.encode())))
 
 class Chromeless():
     REQUIRED_SERVER_VERSION = 2
 
-    def __init__(self, gateway_url=None, gateway_apikey=None, chrome_options=None, function_name='chromeless-server-prod'):
+    def __init__(self, gateway_url=None, gateway_apikey=None, chrome_options=None, function_name='chromeless-server-prod', logger = None, boto3_session = None):
         self.gateway_url = gateway_url
         self.gateway_apikey = gateway_apikey
         self.options = chrome_options
         if function_name == 'chromeless-server-prod' and 'CHROMELESS_SERVER_FUNCTION_NAME' in os.environ:
             function_name = os.environ['CHROMELESS_SERVER_FUNCTION_NAME']
         self.function_name = function_name
+        self.logger = logger
+        self.boto3_session = boto3_session if boto3_session else boto3.session.Session()
         self.codes = {}
 
     def attach(self, method):
@@ -63,11 +75,18 @@ class Chromeless():
         return response.text
 
     def __invoke_lambda(self, dumped):
-        client = boto3.client('lambda')
+        config = botocore.config.Config(retries={'max_attempts': 3}, read_timeout=900, connect_timeout=600)
+        client = self.boto3_session.client('lambda', config=config)
+
         response = client.invoke(
             FunctionName=self.function_name,
             InvocationType='RequestResponse',
             LogType='Tail',
             Payload=json.dumps({'dumped': dumped})
         )
-        return response['Payload'].read().decode()
+        response_body = response['Payload'].read().decode()
+        
+        if self.logger:
+            self.logger.info(json.dumps(response_body))
+
+        return response_body
