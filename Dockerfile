@@ -43,6 +43,7 @@ COPY sls/requirements.txt ./
 RUN pip install -r requirements.txt
 
 COPY sls/server.py ./
+COPY sls/helper.py ./
 COPY chromeless/picklelib.py ./
 COPY sls/fonts.conf /opt/fonts/
 COPY sls/versions/ ./versions/

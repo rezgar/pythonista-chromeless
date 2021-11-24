@@ -24,3 +24,31 @@ functions:
           path: /
           method: post
           private: true
+
+resources:
+  Resources:
+    OrgAccessRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: chromeless-server-orgaccess-role-${self:provider.stage} # required if you want to use 'serverless deploy --function' later on
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                AWS:
+                  - '*'
+                  #- '897543225555'
+              # Condition: 
+              #   StringEquals:
+              #       aws:PrincipalOrgID: "o-szcorkctnt"
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: ExecuteChromelessLambdaPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow # note that these rights are given in the default policy and are required if you want logs out of your lambda(s)
+                  Action: 
+                    - lambda:InvokeFunction
+                  Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:chromeless-server-${self:provider.stage}

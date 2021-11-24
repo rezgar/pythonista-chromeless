@@ -51,7 +51,6 @@ def handler(event=None, context=None):
             }
         }
 
-
 def invoke(dumped):
     arg = loads(dumped)
     print(arg)
@@ -112,39 +111,41 @@ class ChromelessServer():
             return self._recieve(arguments, dirname)
 
     def _recieve(self, arguments, dirname):
-        invoked_func_name = arguments["invoked_func_name"]
-        codes = arguments["codes"]
-        arg = arguments["arg"]
-        kw = arguments["kw"]
-        options = arguments["options"]
-        browser = self.gen_chrome(options, dirname)
-
-        stealth(browser,
-            languages=["en-US", "en"],
-            vendor="Google Inc.",
-            platform="Win32",
-            webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine",
-            fix_hairline=True,
-        )
-
-        for name, code in codes.items():
-            func = self.parse_code(code, name)
-            setattr(browser, name, types.MethodType(func, browser))
-        metadata = {'status': 'success'}
+        browser = None
         try:
+            invoked_func_name = arguments["invoked_func_name"]
+            codes = arguments["codes"]
+            arg = arguments["arg"]
+            kw = arguments["kw"]
+            options = arguments["options"]
+            browser = self.gen_chrome(options, dirname)
+
+            stealth(browser,
+                languages=["en-US", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True,
+            )
+
+            for name, code in codes.items():
+                func = self.parse_code(code, name)
+                setattr(browser, name, types.MethodType(func, browser))
+            metadata = {'status': 'success'}
             response = getattr(browser, invoked_func_name)(*arg, **kw)
         except Exception:
-            metadata['status'] = 'error'
+            metadata = {'status': 'error'}
             response = "\n".join([
                 "\n============== CHROMELESS TRACEBACK IN LAMBDA START ==============",
                 traceback.format_exc(),
                 "============== CHROMELESS TRACEBACK IN LAMBDA END ================\n",
             ])
         finally:
-            browser.quit()
-        return dumps((response, metadata))
+            if browser:
+                browser.quit()
 
+        return dumps((response, metadata))
 
 def get_default_firefox_options(dirname):
     firefox_options = webdriver.FirefoxOptions()
