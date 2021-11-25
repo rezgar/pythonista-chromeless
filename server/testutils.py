@@ -2,7 +2,7 @@ from selenium import webdriver
 from tempfile import TemporaryDirectory
 from webdriver_manager.chrome import ChromeDriverManager
 from server import ChromelessServer, get_default_chrome_options
-from helper import *
+import helper
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,32 +13,26 @@ from selenium.common.exceptions import WebDriverException
 from selenium_stealth import stealth
 
 import inspect, marshal
+import picklelib
+import types
 
-import pickle
-import zlib
-import base64
-
-import re
-import time
-
-def execute_server(func):
+def browse_headless(entry_function_name, functions):
     server = ChromelessServer()
-    return server.recieve({
-        "invoked_func_name": "test",
-        "codes": {
-            "test": (inspect.getsource(func), marshal.dumps(func.__code__))
-        },
+    
+    return picklelib.loads(server.recieve({
+        "invoked_func_name": entry_function_name,
+        "codes": { name: (inspect.getsource(functions[name]), marshal.dumps(functions[name].__code__)) for name in functions},
         "arg": [],
         "kw": {},
         "options": None,
         "REQUIRED_SERVER_VERSION": 2,
-    })
+    }))
 
-def execute_custom(func):
+def browse_graphical(entry_function_name, functions):
     with TemporaryDirectory() as dirname:
         server = ChromelessServer()
-        options = get_default_chrome_options(dirname) 
-        #options = webdriver.ChromeOptions()
+        options = webdriver.ChromeOptions()
+        #options = get_default_chrome_options(dirname) 
             
         browser = server.gen_chrome(options, dirname)
 
@@ -51,4 +45,11 @@ def execute_custom(func):
             fix_hairline=True,
         )
 
-        return func(browser)
+        # Attach helpers
+        for name, code in [(name, code) for name, code in helper.__dict__.items() if callable(code)]:
+            setattr(browser, name, types.MethodType(code, browser))
+
+        for name in functions:
+            setattr(browser, name, types.MethodType(functions[name], browser))
+
+        return functions[entry_function_name](browser)
