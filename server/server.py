@@ -176,7 +176,6 @@ def get_default_chrome_options(dirname):
     options.add_argument("--window-size=1600,1024") # https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md#window--screen-management
     
     options.add_argument("--enable-automation")
-    options.add_argument("--ignore-certificate-errors")
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument(f"--user-data-dir={dirname}/user-data")
     options.add_argument("--homedir=" + dirname)
@@ -185,6 +184,18 @@ def get_default_chrome_options(dirname):
     options.add_argument(f"--disk-cache-size=104857600")
     options.add_argument(f"--profile-directory={dirname}/profile")
     options.add_argument(f"--quarantine-dir={dirname}/quarantine")
+
+    # Stealth
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-service-autorun")
+    options.add_argument("--no-default-browser-check")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-popup-blocking")
+    options.add_argument("--profile-directory=Default")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--disable-plugins-discovery")
+    options.add_argument("--incognito")
 
     options.add_argument('--disable-web-security')
     options.add_argument('--allow-running-insecure-content')
