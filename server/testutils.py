@@ -16,8 +16,8 @@ import inspect, marshal
 import picklelib
 import types
 
-def browse_headless(entry_function_name, functions):
-    server = ChromelessServer()
+def browse(entry_function_name, functions, headless = False, use_tor = True):
+    server = ChromelessServer(headless, use_tor)
     
     return picklelib.loads(server.recieve({
         "invoked_func_name": entry_function_name,
@@ -27,29 +27,3 @@ def browse_headless(entry_function_name, functions):
         "options": None,
         "REQUIRED_SERVER_VERSION": 2,
     }))
-
-def browse_graphical(entry_function_name, functions):
-    with TemporaryDirectory() as dirname:
-        server = ChromelessServer()
-        options = webdriver.ChromeOptions()
-        #options = get_default_chrome_options(dirname) 
-            
-        browser = server.gen_chrome(options, dirname)
-
-        stealth(browser,
-            languages=["en-US", "en"],
-            vendor="Google Inc.",
-            platform="Win32",
-            webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine",
-            fix_hairline=True,
-        )
-
-        # Attach helpers
-        for name, code in [(name, code) for name, code in helper.__dict__.items() if callable(code)]:
-            setattr(browser, name, types.MethodType(code, browser))
-
-        for name in functions:
-            setattr(browser, name, types.MethodType(functions[name], browser))
-
-        return functions[entry_function_name](browser)

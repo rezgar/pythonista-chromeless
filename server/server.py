@@ -72,9 +72,13 @@ def invoke(dumped):
 class ChromelessServer():
     SERVER_VERSION = 2
 
+    def __init__(self, headless = True, use_tor = False):
+        self.headless = headless
+        self.use_tor = use_tor
+
     def gen_chrome(self, options, dirname):
         if options is None:
-            options = get_default_chrome_options(dirname)
+            options = get_default_chrome_options(self, dirname)
         
         chromedriver=ChromeDriverManager(path="/tmp/chromedriver").install()
 
@@ -82,7 +86,7 @@ class ChromelessServer():
 
     def gen_firefox(self, options, dirname):
         if options is None:
-            options = get_default_firefox_options(dirname)
+            options = get_default_firefox_options(self, dirname)
         
         geckodriver = GeckoDriverManager(path="/tmp/geckodriver").install()
         profile = webdriver.FirefoxProfile(profile_directory=dirname)
@@ -154,7 +158,7 @@ class ChromelessServer():
 
         return dumps((response, metadata))
 
-def get_default_firefox_options(dirname):
+def get_default_firefox_options(self, dirname):
     firefox_options = webdriver.FirefoxOptions()
     firefox_options.add_argument("-headless")
     firefox_options.add_argument("-safe-mode")
@@ -162,20 +166,28 @@ def get_default_firefox_options(dirname):
     firefox_options.add_argument('-height 1440')
 
     return firefox_options
-def get_default_chrome_options(dirname):
+def get_default_chrome_options(self, dirname):
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
+    
+    if self.use_tor:
+        options.add_argument('--proxy-server=socks5://127.0.0.1:9050')
+
+    if self.headless:
+        options.add_argument("--headless")
+        options.add_argument("--no-zygote")
+        options.add_argument("--single-process")
+
     options.add_argument("--no-sandbox")
+    options.add_argument("--enable-automation")
     #options.add_argument("--test-type=integration")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-dev-tools")
-    options.add_argument("--no-zygote")
-    options.add_argument("--single-process")
+
     #options.add_argument("window-size=2560x1440") # https://github.com/aws-samples/serverless-ui-testing-using-selenium/blob/5454ea9ddc13a0f1ad397d9c22f1e4db58fc39fc/app.py#L66
     options.add_argument("--window-size=1600,1024") # https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md#window--screen-management
     
-    options.add_argument("--enable-automation")
+    options.add_argument("--profile-directory=Default")
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument(f"--user-data-dir={dirname}/user-data")
     options.add_argument("--homedir=" + dirname)
@@ -192,7 +204,6 @@ def get_default_chrome_options(dirname):
     options.add_argument("--no-default-browser-check")
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-popup-blocking")
-    options.add_argument("--profile-directory=Default")
     options.add_argument("--ignore-certificate-errors")
     options.add_argument("--disable-plugins-discovery")
     options.add_argument("--incognito")
