@@ -9,7 +9,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium_stealth import stealth
 
 from picklelib import loads, dumps  # imports in Dockerfile
-from helper import *
+import helper
 
 import json
 import marshal
@@ -130,9 +130,15 @@ class ChromelessServer():
                 fix_hairline=True,
             )
 
+            # Attach helpers
+            for name, code in [(name, code) for name, code in helper.__dict__.items() if callable(code)]:
+                setattr(browser, name, types.MethodType(code, browser))
+
+            # Attach code "attach"ed by the user
             for name, code in codes.items():
                 func = self.parse_code(code, name)
                 setattr(browser, name, types.MethodType(func, browser))
+
             metadata = {'status': 'success'}
             response = getattr(browser, invoked_func_name)(*arg, **kw)
         except Exception:
