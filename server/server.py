@@ -178,7 +178,6 @@ def get_default_chrome_options(self, dirname):
         options.add_argument("--single-process")
 
     options.add_argument("--no-sandbox")
-    options.add_argument("--enable-automation")
     #options.add_argument("--test-type=integration")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
@@ -187,7 +186,7 @@ def get_default_chrome_options(self, dirname):
     #options.add_argument("window-size=2560x1440") # https://github.com/aws-samples/serverless-ui-testing-using-selenium/blob/5454ea9ddc13a0f1ad397d9c22f1e4db58fc39fc/app.py#L66
     options.add_argument("--window-size=1600,1024") # https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md#window--screen-management
     
-    options.add_argument("--profile-directory=Default")
+    options.add_argument("--enable-automation")
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument(f"--user-data-dir={dirname}/user-data")
     options.add_argument("--homedir=" + dirname)
@@ -204,10 +203,12 @@ def get_default_chrome_options(self, dirname):
     options.add_argument("--no-default-browser-check")
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-popup-blocking")
+    options.add_argument("--profile-directory=Default")
     options.add_argument("--ignore-certificate-errors")
     options.add_argument("--disable-plugins-discovery")
     options.add_argument("--incognito")
 
     options.add_argument('--disable-web-security')
     options.add_argument('--allow-running-insecure-content')
+
     return options
