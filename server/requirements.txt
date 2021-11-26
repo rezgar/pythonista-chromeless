@@ -1,3 +1,4 @@
 selenium
+selenium-wire
 selenium-stealth
 webdriver-manager

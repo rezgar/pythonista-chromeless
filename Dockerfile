@@ -3,7 +3,7 @@ FROM public.ecr.aws/lambda/python:3.9
 RUN yum install xz atk cups-libs gtk3 libXcomposite alsa-lib tar \
     libXcursor libXdamage libXext libXi libXrandr libXScrnSaver \
     libXtst pango at-spi2-atk libXt xorg-x11-server-Xvfb \
-    xorg-x11-xauth dbus-glib dbus-glib-devel unzip bzip2 -y -q
+    xorg-x11-xauth dbus-glib dbus-glib-devel unzip bzip2 openssl -y -q
 
 # # Install dependencies
 # RUN yum install -y nodejs gcc-c++ make cups-libs dbus-glib libXrandr libXcursor libXinerama cairo cairo-gobject pango libXScrnSaver gtk3

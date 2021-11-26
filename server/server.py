@@ -2,7 +2,9 @@ import os
 import shutil
 import types
 import zipfile
-from selenium import webdriver
+#from selenium import webdriver
+from seleniumwire import webdriver
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -81,11 +83,11 @@ class ChromelessServer():
 
     def gen_chrome(self, options, dirname):
         if options is None:
-            options = get_default_chrome_options(self, dirname)
+            options, seleniumwire_options = get_default_chrome_options(self, dirname)
         
         chromedriver=ChromeDriverManager(path="/tmp/chromedriver").install()
 
-        return webdriver.Chrome(chromedriver, options=options)
+        return webdriver.Chrome(chromedriver, options=options, seleniumwire_options = seleniumwire_options)
 
     def gen_firefox(self, options, dirname):
         if options is None:
@@ -172,63 +174,16 @@ def get_default_firefox_options(self, dirname):
     return firefox_options
 def get_default_chrome_options(self, dirname):
     options = webdriver.ChromeOptions()
+    seleniumwire_options = {}
     
     if self.use_tor:
         options.add_argument('--proxy-server=socks5://127.0.0.1:9050')
-
+    
     if self.proxy:
-        manifest_json = """
-        {
-            "version": "1.0.0",
-            "manifest_version": 2,
-            "name": "Chrome Proxy",
-            "permissions": [
-                "proxy",
-                "tabs",
-                "unlimitedStorage",
-                "storage",
-                "<all_urls>",
-                "webRequest",
-                "webRequestBlocking"
-            ],
-            "background": {
-                "scripts": ["background.js"]
-            },
-            "minimum_chrome_version":"22.0.0"
+        seleniumwire_options['proxy'] = {
+            'https': f'https://{self.proxy["username"]}:{self.proxy["password"]}@{self.proxy["host"]}:{self.proxy["port"]}',
+            'no_proxy': 'localhost,127.0.0.1'
         }
-        """
-
-        background_js = """
-        var config = {
-            mode: "fixed_servers",
-            rules: {
-                singleProxy: {
-                    scheme: "http",
-                    host: "%s",
-                    port: parseInt(%s)
-                },
-                bypassList: ["localhost"]
-            }
-        };
-
-        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
-
-        function callbackFn(details) {
-            return { authCredentials: { username: "%s", password: "%s" } };
-        }
-
-        chrome.webRequest.onAuthRequired.addListener(callbackFn, {urls: ["<all_urls>"]}, ['blocking']);
-        
-        """ % (self.proxy['host'], self.proxy['port'], self.proxy['user'], self.proxy['password'])
-
-        pluginfile = 'proxy_auth_plugin.zip'
-
-        with zipfile.ZipFile(pluginfile, 'w') as zp:
-            zp.writestr("manifest.json", manifest_json)
-            zp.writestr("background.js", background_js)
-        options.add_extension(pluginfile)
-    else:
-        options.add_argument("--disable-extensions")
 
     if self.headless:
         options.add_argument("--headless")
@@ -256,6 +211,7 @@ def get_default_chrome_options(self, dirname):
     options.add_argument("--profile-directory=Default")
     
     if self.stealth:
+        options.add_argument("--disable-extensions")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--no-first-run")
         options.add_argument("--no-service-autorun")
@@ -268,4 +224,4 @@ def get_default_chrome_options(self, dirname):
     options.add_argument('--disable-web-security')
     options.add_argument('--allow-running-insecure-content')
 
-    return options
+    return options, seleniumwire_options
