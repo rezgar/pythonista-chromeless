@@ -5,5 +5,5 @@ package-lock.json
 package.json
 *.pyc
 *.log
+*.zip
 **/test.py
-lambda.zip
