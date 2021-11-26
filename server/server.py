@@ -189,7 +189,7 @@ def get_default_chrome_options(self, dirname):
         options.add_argument('--proxy-server=socks5://127.0.0.1:9050')
     
     if self.proxy:
-        proxy_creds = f'{self.proxy["username"]}:{self.proxy["password"]}@'
+        proxy_creds = f'{self.proxy["username"]}:{self.proxy["password"]}'
         proxy_address = f'{self.proxy["host"]}:{self.proxy["port"]}'
         proxy_uri = "https://" + ((proxy_creds + "@") if "username" in self.proxy else "") + proxy_address
 
