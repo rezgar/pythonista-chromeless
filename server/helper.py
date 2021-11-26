@@ -18,24 +18,24 @@ def login_with_google(browser, email, password):
     # This link comes from the oauth playground, which is an official tool Google provides to test oauth applications.
     browser.get('https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow')
 
-    WebDriverWait(browser, 20).until(lambda driver: "google.com" in driver.current_url)
+    WebDriverWait(browser, 60).until(lambda driver: "google.com" in driver.current_url)
 
-    WebDriverWait(browser, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, selectors['email'])))
+    WebDriverWait(browser, 60).until(EC.element_to_be_clickable((By.CSS_SELECTOR, selectors['email'])))
     browser.find_element_by_css_selector(selectors['email']).send_keys(email)
-    WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, selectors['email_next'])))
+    WebDriverWait(browser, 60).until(EC.presence_of_element_located((By.CSS_SELECTOR, selectors['email_next'])))
     browser.find_element_by_css_selector(selectors['email_next']).click()
 
     # create action chain object
     action = ActionChains(browser)
     action.move_to_element(browser.find_element_by_css_selector('h1')).click().perform()
 
-    WebDriverWait(browser, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, selectors['password'])))
+    WebDriverWait(browser, 60).until(EC.element_to_be_clickable((By.CSS_SELECTOR, selectors['password'])))
 
     browser.find_element_by_css_selector(selectors['password']).send_keys(password)
-    WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, selectors['password_next'])))
+    WebDriverWait(browser, 60).until(EC.presence_of_element_located((By.CSS_SELECTOR, selectors['password_next'])))
     browser.find_element_by_css_selector(selectors['password_next']).click()
 
-    WebDriverWait(browser, 20).until(lambda driver: driver.current_url.startswith("https://developers.google.com"))
+    WebDriverWait(browser, 60).until(lambda driver: driver.current_url.startswith("https://developers.google.com"))
 
     return browser
 
@@ -56,21 +56,21 @@ def login_with_slack(browser, workspace, email, password):
     google_login_button = browser.find_element_by_css_selector(selectors['login'])
     google_login_button.click()
 
-    WebDriverWait(browser, 20).until(lambda driver: "slack.com" in driver.current_url)
+    WebDriverWait(browser, 60).until(lambda driver: "slack.com" in driver.current_url)
 
-    WebDriverWait(browser, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, selectors['workspace'])))
+    WebDriverWait(browser, 60).until(EC.element_to_be_clickable((By.CSS_SELECTOR, selectors['workspace'])))
     browser.find_element_by_css_selector(selectors['workspace']).send_keys(workspace)
     browser.find_element_by_css_selector(selectors['workspace_next']).click()
 
-    WebDriverWait(browser, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, selectors['email'])))
+    WebDriverWait(browser, 60).until(EC.element_to_be_clickable((By.CSS_SELECTOR, selectors['email'])))
     browser.find_element_by_css_selector(selectors['email']).send_keys(email)
     browser.find_element_by_css_selector(selectors['password']).send_keys(password)
 
     browser.find_element_by_css_selector(selectors['signin']).click()
     
-    WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, selectors['permissions_accept_form'])))
+    WebDriverWait(browser, 60).until(EC.presence_of_element_located((By.CSS_SELECTOR, selectors['permissions_accept_form'])))
     browser.find_element_by_css_selector(selectors['accept_permissions']).click()
 
-    WebDriverWait(browser, 20).until(lambda driver: "slack.com" not in driver.current_url)
+    WebDriverWait(browser, 60).until(lambda driver: "slack.com" not in driver.current_url)
 
     return browser
