@@ -38,9 +38,14 @@ def browse(entry_function_name, functions, remote = False, **kwargs):
             aws_session_token = credentials['SessionToken']
         )
 
-        return Chromeless(
+        browser = Chromeless(
             function_name = 'chromeless-server-prod',
             boto3_session = boto3_session)
+
+        for function in functions:
+            browser.attach(function)
+
+        getattr(browser, entry_function_name)()
     
     # Local server
     else:
@@ -48,7 +53,7 @@ def browse(entry_function_name, functions, remote = False, **kwargs):
         
         return picklelib.loads(server.recieve({
             "invoked_func_name": entry_function_name,
-            "codes": { name: (inspect.getsource(functions[name]), marshal.dumps(functions[name].__code__)) for name in functions},
+            "codes": { function.__name__: (inspect.getsource(function), marshal.dumps(function.__code__)) for function in functions},
             "arg": [],
             "kw": {},
             "options": None,
