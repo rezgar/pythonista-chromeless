@@ -16,8 +16,8 @@ import inspect, marshal
 import picklelib
 import types
 
-def browse(entry_function_name, functions, headless = False, use_tor = True):
-    server = ChromelessServer(headless, use_tor)
+def browse(entry_function_name, functions, **kwargs):
+    server = ChromelessServer(**kwargs)
     
     return picklelib.loads(server.recieve({
         "invoked_func_name": entry_function_name,

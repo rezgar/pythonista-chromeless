@@ -47,4 +47,5 @@ COPY server/helper.py ./
 COPY server/picklelib.py ./
 COPY server/fonts.conf /opt/fonts/
 COPY server/versions/ ./versions/
+COPY server/MultiPass-for-HTTP-basic-authentication.crx ./
 CMD ["server.handler"]

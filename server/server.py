@@ -1,6 +1,7 @@
 import os
 import shutil
 import types
+import zipfile
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -72,9 +73,11 @@ def invoke(dumped):
 class ChromelessServer():
     SERVER_VERSION = 2
 
-    def __init__(self, headless = True, use_tor = False):
+    def __init__(self, headless = True, use_tor = False, proxy = None, stealth = True):
         self.headless = headless
         self.use_tor = use_tor
+        self.proxy = proxy
+        self.stealth = stealth
 
     def gen_chrome(self, options, dirname):
         if options is None:
@@ -125,14 +128,15 @@ class ChromelessServer():
             options = arguments["options"]
             browser = self.gen_chrome(options, dirname)
 
-            stealth(browser,
-                languages=["en-US", "en"],
-                vendor="Google Inc.",
-                platform="Win32",
-                webgl_vendor="Intel Inc.",
-                renderer="Intel Iris OpenGL Engine",
-                fix_hairline=True,
-            )
+            if self.stealth:
+                stealth(browser,
+                    languages=["en-US", "en"],
+                    vendor="Google Inc.",
+                    platform="Win32",
+                    webgl_vendor="Intel Inc.",
+                    renderer="Intel Iris OpenGL Engine",
+                    fix_hairline=True,
+                )
 
             # Attach helpers
             for name, code in [(name, code) for name, code in helper.__dict__.items() if callable(code)]:
@@ -172,6 +176,60 @@ def get_default_chrome_options(self, dirname):
     if self.use_tor:
         options.add_argument('--proxy-server=socks5://127.0.0.1:9050')
 
+    if self.proxy:
+        manifest_json = """
+        {
+            "version": "1.0.0",
+            "manifest_version": 2,
+            "name": "Chrome Proxy",
+            "permissions": [
+                "proxy",
+                "tabs",
+                "unlimitedStorage",
+                "storage",
+                "<all_urls>",
+                "webRequest",
+                "webRequestBlocking"
+            ],
+            "background": {
+                "scripts": ["background.js"]
+            },
+            "minimum_chrome_version":"22.0.0"
+        }
+        """
+
+        background_js = """
+        var config = {
+            mode: "fixed_servers",
+            rules: {
+                singleProxy: {
+                    scheme: "http",
+                    host: "%s",
+                    port: parseInt(%s)
+                },
+                bypassList: ["localhost"]
+            }
+        };
+
+        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+
+        function callbackFn(details) {
+            return { authCredentials: { username: "%s", password: "%s" } };
+        }
+
+        chrome.webRequest.onAuthRequired.addListener(callbackFn, {urls: ["<all_urls>"]}, ['blocking']);
+        
+        """ % (self.proxy['host'], self.proxy['port'], self.proxy['user'], self.proxy['password'])
+
+        pluginfile = 'proxy_auth_plugin.zip'
+
+        with zipfile.ZipFile(pluginfile, 'w') as zp:
+            zp.writestr("manifest.json", manifest_json)
+            zp.writestr("background.js", background_js)
+        options.add_extension(pluginfile)
+    else:
+        options.add_argument("--disable-extensions")
+
     if self.headless:
         options.add_argument("--headless")
         options.add_argument("--no-zygote")
@@ -195,18 +253,17 @@ def get_default_chrome_options(self, dirname):
     options.add_argument(f"--disk-cache-size=104857600")
     options.add_argument(f"--profile-directory={dirname}/profile")
     options.add_argument(f"--quarantine-dir={dirname}/quarantine")
-
-    # Stealth
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--no-first-run")
-    options.add_argument("--no-service-autorun")
-    options.add_argument("--no-default-browser-check")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-popup-blocking")
     options.add_argument("--profile-directory=Default")
-    options.add_argument("--ignore-certificate-errors")
-    options.add_argument("--disable-plugins-discovery")
-    options.add_argument("--incognito")
+    
+    if self.stealth:
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--no-first-run")
+        options.add_argument("--no-service-autorun")
+        options.add_argument("--no-default-browser-check")
+        options.add_argument("--disable-popup-blocking")
+        options.add_argument("--ignore-certificate-errors")
+        options.add_argument("--disable-plugins-discovery")
+        options.add_argument("--incognito")
 
     options.add_argument('--disable-web-security')
     options.add_argument('--allow-running-insecure-content')
