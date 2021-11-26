@@ -24,6 +24,11 @@ functions:
           path: /
           method: post
           private: true
+    environment:
+      PROXY_HOST: ${env:PROXY_HOST}
+      PROXY_PORT: ${env:PROXY_PORT}
+      PROXY_USERNAME: ${env:PROXY_USERNAME}
+      PROXY_PASSWORD: ${env:PROXY_PASSWORD}
 
 resources:
   Resources:

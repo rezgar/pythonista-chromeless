@@ -69,7 +69,16 @@ def invoke(dumped):
     if required_version is None:
         arg = dumps(arg)  # dump again
 
-    return ChormelessServerClass().recieve(arg)
+    kwargs = {}
+    if os.getenv("PROXY_HOST", None):
+        kwargs["proxy"] = {
+            "host": os.getenv("PROXY_HOST", None),
+            "port": os.getenv("PROXY_PORT", None),
+            "username": os.getenv("PROXY_USERNAME", None),
+            "password": os.getenv("PROXY_PASSWORD", None)
+        }
+
+    return ChormelessServerClass(kwargs).recieve(arg)
 
 
 class ChromelessServer():
@@ -180,8 +189,11 @@ def get_default_chrome_options(self, dirname):
         options.add_argument('--proxy-server=socks5://127.0.0.1:9050')
     
     if self.proxy:
+        proxy_creds = f'{self.proxy["username"]}:{self.proxy["password"]}' if "username" in self.proxy else ""
+        proxy_uri = f'{self.proxy["host"]}:{self.proxy["port"]}'
+
         seleniumwire_options['proxy'] = {
-            'https': f'https://{self.proxy["username"]}:{self.proxy["password"]}@{self.proxy["host"]}:{self.proxy["port"]}',
+            'https': f'https://{proxy_creds}@{proxy_uri}',
             'no_proxy': 'localhost,127.0.0.1'
         }
 
