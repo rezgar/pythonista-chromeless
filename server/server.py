@@ -17,8 +17,6 @@ import helper
 import json
 import marshal
 import textwrap
-from versions import ChromelessServerVerNone
-from versions import ChromelessServerVer1
 import traceback
 from tempfile import TemporaryDirectory
 import os
@@ -57,33 +55,9 @@ def handler(event=None, context=None):
 
 def invoke(dumped):
     arg = loads(dumped)
-    print(arg)
-    required_version = arg['REQUIRED_SERVER_VERSION'] if isinstance(arg, dict) else None
-    
-    ChormelessServerClass = {
-        2: ChromelessServer,  # latest
-        1: ChromelessServerVer1,
-        None: ChromelessServerVerNone,
-    }[required_version]
-
-    if required_version is None:
-        arg = dumps(arg)  # dump again
-
-    kwargs = {}
-    if os.getenv("PROXY_HOST", None):
-        kwargs["proxy"] = {
-            "host": os.getenv("PROXY_HOST", None),
-            "port": os.getenv("PROXY_PORT", None),
-            "username": os.getenv("PROXY_USERNAME", None),
-            "password": os.getenv("PROXY_PASSWORD", None)
-        }
-
-    return ChormelessServerClass(kwargs).recieve(arg)
-
+    return ChromelessServer(proxy = os.getenv("PROXY")).recieve(arg)
 
 class ChromelessServer():
-    SERVER_VERSION = 2
-
     def __init__(self, headless = True, use_tor = False, proxy = None, stealth = True):
         self.headless = headless
         self.use_tor = use_tor
@@ -189,12 +163,9 @@ def get_default_chrome_options(self, dirname):
         options.add_argument('--proxy-server=socks5://127.0.0.1:9050')
     
     if self.proxy:
-        proxy_creds = f'{self.proxy["username"]}:{self.proxy["password"]}'
-        proxy_address = f'{self.proxy["host"]}:{self.proxy["port"]}'
-        proxy_uri = "https://" + ((proxy_creds + "@") if "username" in self.proxy else "") + proxy_address
-
         seleniumwire_options['proxy'] = {
-            'https': proxy_uri,
+            'http': self.proxy,
+            'https': self.proxy,
             'no_proxy': 'localhost,127.0.0.1'
         }
 

@@ -45,8 +45,7 @@ def browse(entry_function_name, functions, remote = False, **kwargs):
         for function in functions:
             browser.attach(function)
 
-        getattr(browser, entry_function_name)()
-    
+        return getattr(browser, entry_function_name)()
     # Local server
     else:
         server = ChromelessServer(**kwargs)
@@ -56,6 +55,5 @@ def browse(entry_function_name, functions, remote = False, **kwargs):
             "codes": { function.__name__: (inspect.getsource(function), marshal.dumps(function.__code__)) for function in functions},
             "arg": [],
             "kw": {},
-            "options": None,
-            "REQUIRED_SERVER_VERSION": 2,
+            "options": None
         }))

@@ -19,8 +19,6 @@ def loads(obj):
     return pickle.loads(zlib.decompress(base64.b64decode(obj.encode())))
 
 class Chromeless():
-    REQUIRED_SERVER_VERSION = 2
-
     def __init__(self, gateway_url=None, gateway_apikey=None, chrome_options=None, function_name='chromeless-server-prod', logger = None, boto3_session = None):
         self.gateway_url = gateway_url
         self.gateway_apikey = gateway_apikey
@@ -49,8 +47,7 @@ class Chromeless():
             "codes": self.codes,
             "arg": arg,
             "kw": kw,
-            "options": self.options,
-            "REQUIRED_SERVER_VERSION": self.REQUIRED_SERVER_VERSION,
+            "options": self.options
         })
         if self.function_name == "local":
             method = self.__invoke_local

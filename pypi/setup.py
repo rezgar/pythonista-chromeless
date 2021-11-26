@@ -1,5 +1,4 @@
 import setuptools
-from __version__ import __version__
 
 requirements = [
     'requests',
@@ -10,7 +9,6 @@ with open("README.md", "r") as f:
     long_description = f.read()
 setuptools.setup(
     name="chromeless",
-    version=__version__,
     author="umihico",
     author_email="umihico@users.noreply.github.com",
     description="Serverless selenium which dynamically execute any given code.",
