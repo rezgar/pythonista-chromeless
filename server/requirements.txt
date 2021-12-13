@@ -2,3 +2,4 @@ selenium
 selenium-wire
 selenium-stealth
 webdriver-manager
+boto3
