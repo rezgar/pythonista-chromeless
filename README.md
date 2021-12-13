@@ -31,10 +31,11 @@ chrome.attach(selenium_scripts_called_by_your_selenium_script_function)
 result = chrome.your_selenium_script_function(param1, param2)
 ```
 
-Selenium server Lambda can be called directly or via API Gateway (added limitations: max 30 sec execution duration). 
+Selenium server Lambda can be called directly or via API Gateway (added limitation: max 30 sec execution duration). 
 
 **Caveat**: Only "attached" functions are sent to the server, not their dependencies
-This means you **can not reference** functions/variables/imports declared outside of the function body, unless they are also "attached"
+This means you **can not reference** functions/variables/imports declared outside of the function body, unless they are also "attached". You can not use imports that are not imported on the server.
+
 
 ## Debugging Selenium scripts
 
@@ -47,29 +48,31 @@ You can use `server/debug_utils.py` to conveniently execute and debug your Selen
 
 **Sample test script:**
 ```
-  sts_client = boto3.client('sts')
-  credentials=sts_client.assume_role(
-      RoleArn = "arn:aws:iam::99999999999:role/chromeless-server-orgaccess-role-prod",
-      RoleSessionName = f"Selenium-Debugger",
-  )['Credentials']
+from server.debug_utils import *
 
-  boto3_session = boto3.Session(
-      aws_access_key_id = credentials['AccessKeyId'],
-      aws_secret_access_key = credentials['SecretAccessKey'],
-      aws_session_token = credentials['SessionToken'],
-      region_name = "us-east-1"
-  )
-  
-  print(browse(
-    selenium_test_script.__name__,
-    functions = [ selenium_test_script, expand_folder_path, navigate_to_folder, create_folder ],
-    boto3_session = boto3_session,
-    remote = True,
-    headless = True,
-    use_tor = False,
-    stealth = True,
-    proxy = "https://name:password@45.150.7.78:99990",
-  ))
+sts_client = boto3.client('sts')
+credentials=sts_client.assume_role(
+    RoleArn = "arn:aws:iam::99999999999:role/chromeless-server-orgaccess-role-prod",
+    RoleSessionName = f"Selenium-Debugger",
+)['Credentials']
+
+boto3_session = boto3.Session(
+    aws_access_key_id = credentials['AccessKeyId'],
+    aws_secret_access_key = credentials['SecretAccessKey'],
+    aws_session_token = credentials['SessionToken'],
+    region_name = "us-east-1"
+)
+
+print(browse(
+  selenium_test_script.__name__,
+  functions = [ selenium_test_script, expand_folder_path, navigate_to_folder, create_folder ],
+  boto3_session = boto3_session,
+  remote = True,
+  headless = True,
+  use_tor = False,
+  stealth = True,
+  proxy = "https://name:password@45.150.7.78:99990",
+))
 ```
 
 ### [License](https://github.com/umihico/pythonista-chromeless/blob/master/LICENSE)
