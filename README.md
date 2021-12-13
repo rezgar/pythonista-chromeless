@@ -2,13 +2,15 @@
 
 This is a Selenium Python server hosted on AWS Lambda. Clients can call it directly or via AWS API Gateway, and have the server execute their Selenium Python scripts and return the result.
 
-This is a fork of the [pythonista-chromeless](https://github.com/umihico/pythonista-chromeless.git) project by umihico.
+This is a fork of the [pythonista-chromeless](https://github.com/umihico/pythonista-chromeless.git) project by **umihico**.
 
 **Added functionality:**
 - Evergreen Chrome
 - Stealth (powered by `selenium-stealth`)
-- Proxy support (including password-protected proxies)
+- Proxy/Tor support (including password-protected proxies)
 - Debugging tools (running scripts in different modes (stealth, headless etc) against a local or a remote Selenium server)
+
+Enabling Stealth and using Proxies allows bypassing most of the anti-automation checks, including Google's.
 
 ## Deploying the Selenium server Lambda
 
