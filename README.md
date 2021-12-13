@@ -1,102 +1,74 @@
-# chromeless
-AWS lambda with selenium & python is powerful solution.
-Let's access this benefit easily!
+## Introduction
 
-+ Don't create lambda functions every time. Just create this once.
-+ Write the method.
-+ Selenium dynamically execute your script.
+This is a Selenium Python server hosted on AWS Lambda. Clients can call it directly or via AWS API Gateway, and have the server execute their Selenium Python scripts and return the result.
 
-## Example
-```python
-# Write the method.
-def get_title(self, url):
-    self.get(url)
-    return self.title
+This is a fork of the [pythonista-chromeless](https://github.com/umihico/pythonista-chromeless.git) project by umihico.
 
-# Attach the method and then call it.
-from chromeless import Chromeless
+**Added functionality:**
+- Evergreen Chrome
+- Stealth (powered by `selenium-stealth`)
+- Proxy support (including password-protected proxies)
+- Debugging tools (running scripts in different modes (stealth, headless etc) against a local or a remote Selenium server)
+
+## Deploying the Selenium server Lambda
+
+`PROXY=https://username:password@host:port sls deploy --region YOUR_REGION`
+
+This will deploy a Lambda and an API Gateway in front of it.
+
+## Running Selenium scripts using the Selenium server
+
+The idea behind this project is for the client to send the script to the server, which then executes it in its own context. The `client` utility abstracts away this communication and allows the client to invoke functions in a semi-usual manner.
+
+**Usage:**
+```
 chrome = Chromeless()
-chrome.attach(get_title)
-print(chrome.get_title("https://google.com")) # Returns Google
+chrome.attach(your_selenium_script_function)
+chrome.attach(selenium_scripts_called_by_your_selenium_script_function)
+
+result = chrome.your_selenium_script_function(param1, param2)
 ```
 
-## Installing
+Selenium server Lambda can be called directly or via API Gateway (added limitations: max 30 sec execution duration). 
 
-  + `git clone --depth 1 https://github.com/umihico/pythonista-chromeless.git chromeless && cd $_`
-  + `sls deploy --region YOUR_REGION`
-  + `pip install chromeless`
+**Caveat**: Only "attached" functions are sent to the server, not their dependencies
+This means you **can not reference** functions/variables/imports declared outside of the function body, unless they are also "attached"
 
-That's it! Now run the `example.py` and confirm your selenium works in lambda functions!
+## Debugging Selenium scripts
 
-## Tips
-+ **Don't call selenium native methods directly.** Solution is wrapping.
+You can use `server/debug_utils.py` to conveniently execute and debug your Selenium Python scripts in different modes:
++ Locally or against a remote server (Lambda)
++ In a regular or headless mode
++ In a regular or stealth mode
++ Via an unauthenticated or authenticated proxy
++ Via Tor
 
-```python
-# BAD EXAMPLE
-chrome = Chromeless()
-chrome.get("https://google.com") # Not a attached method. AttributeError will be raised.
-chrome.title # Same. AttributeError.
-
-# SOLUTION
-def wrapper(self, url):
-    self.get(url)
-    return self.title
-
-chrome = Chromeless()
-chrome.attach(wrapper)
-print(chrome.wrapper("https://google.com")) # prints 'Google'.
-print(chrome.wrapper("https://microsoft.com")) # But you can execute as many times as you want.
-print(chrome.wrapper("https://apple.com")) # Arguments are adjustable each time.
+**Sample test script:**
 ```
+  sts_client = boto3.client('sts')
+  credentials=sts_client.assume_role(
+      RoleArn = "arn:aws:iam::99999999999:role/chromeless-server-orgaccess-role-prod",
+      RoleSessionName = f"Selenium-Debugger",
+  )['Credentials']
 
-+ Multiple methods are also attachable.
-
-```python
-def login(self):
-    self.get("https://example.com/login")
-    self.find_element_by_id("username").send_keys("umihico")
-    self.find_element_by_id("password").send_keys("password")
-    self.find_element_by_name("submit").click()
-
-def test1(self):
-    self.login()
-    self.get("https://example.com/")
-
-def test2(self):
-    self.login()
-    self.get("https://example.com/logout")
-
-chrome = Chromeless()
-chrome.attach(login) # You can attach multiple methods too.
-chrome.attach(test1) # It means you can also refactor the common code.
-chrome.attach(test2)
-print(chrome.test1())
-print(chrome.test2())
-```
-
-+ To screenshot
-
-```python
-# BAD EXAMPLE
-def bad_wrapper(self):
-  self.get("https://google.com")
-  self.save_screenshot("screenshot.png")
-  # There's no sense in saving files in AWS Lambda.
-
-# SOLUTION
-def good_wrapper(self):
-  self.get("https://google.com")
-  return self.get_screenshot_as_png()
-  # return image in binary format.
-
-chrome = Chromeless()
-chrome.attach(good_wrapper)
-png = chrome.good_wrapper()
-# then write then image down locally.
-with open("screenshot.png", 'wb') as f:
-    f.write(png)
-
+  boto3_session = boto3.Session(
+      aws_access_key_id = credentials['AccessKeyId'],
+      aws_secret_access_key = credentials['SecretAccessKey'],
+      aws_session_token = credentials['SessionToken'],
+      region_name = "us-east-1"
+  )
+  
+  print(browse(
+    selenium_test_script.__name__,
+    functions = [ selenium_test_script, expand_folder_path, navigate_to_folder, create_folder ],
+    boto3_session = boto3_session,
+    remote = True,
+    headless = True,
+    use_tor = False,
+    stealth = True,
+    proxy = "https://name:password@45.150.7.78:99990",
+  ))
 ```
 
 ### [License](https://github.com/umihico/pythonista-chromeless/blob/master/LICENSE)
-The project is licensed under the MIT license.
+The project is licensed by **umihico** under the MIT license.

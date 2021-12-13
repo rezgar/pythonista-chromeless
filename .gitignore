@@ -6,4 +6,4 @@ package.json
 *.pyc
 *.log
 *.zip
-**/test.py
+**/debug.py
