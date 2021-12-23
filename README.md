@@ -34,8 +34,7 @@ result = chrome.your_selenium_script_function(param1, param2)
 Selenium server Lambda can be called directly or via API Gateway (added limitation: max 30 sec execution duration). 
 
 **Caveat**: Only "attached" functions are sent to the server, not their dependencies
-This means you **can not reference** functions/variables/imports declared outside of the function body, unless they are also "attached". You can not use imports that are not imported on the server.
-
+This means you **can not reference** functions/variables/imports declared outside of the function body, unless they are also "attached". You can not use imports that are not imported on the server. **Important note**: The server embeds several predefined scripts (see [helper.py](https://github.com/rezgar/selenium-server/blob/master/server/helper.py))that the client scripts can utilize.
 
 ## Debugging Selenium scripts
 
