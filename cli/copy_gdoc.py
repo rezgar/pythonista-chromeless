@@ -1,10 +1,39 @@
 import argparse, sys
 import sys, os
-sys.path.append(os.path.abspath('./server'))
-from cli_utils import *
+#sys.path.append(os.path.abspath('./server'))
+sys.path.append(os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'server')))
+from browse_utils import *
+import inspect
 import re
 
-def main(browser, *arg):
+def main():
+  parser=argparse.ArgumentParser()
+  parser.add_argument('--document', help='Source Google Document ID', required=True)
+  parser.add_argument('--snapshot', help='Snapshot name', required=True)
+  parser.add_argument('--email', help='Google account email', required=True)
+  parser.add_argument('--password', help='Google account password', required=True)
+  parser.add_argument('--proxy', help='HTTPS proxy, format: [https://username:password@host:port]')
+  parser.add_argument('--headless', help='Headless mode', action='store_true')
+
+  if len(sys.argv) == 1:
+    print(parser.format_help())
+    return
+
+  args, unknown = parser.parse_known_args()
+
+  print(selenium_main.__code__.co_filename)
+
+  print(browse(
+    selenium_main.__name__,
+    functions =  [obj for name,obj in inspect.getmembers(sys.modules[__name__]) if (inspect.isfunction(obj) and obj.__module__ == __name__)],
+    remote = False,
+    headless = args.headless,
+    use_tor = False,
+    stealth = True,
+    proxy = args.proxy
+  ))
+
+def selenium_main(browser, *arg):
   parser = argparse.ArgumentParser()
 
   parser.add_argument('--document', help='Source Google Document ID', required=True)
@@ -72,22 +101,4 @@ def copy_document(browser, email, password, document_id, new_name, copy_comments
     return document_id
 
 if __name__ == '__main__':
-  parser=argparse.ArgumentParser()
-  parser.add_argument('--proxy', help='HTTPS proxy, format: [https://username:password@host:port]')
-  parser.add_argument('--headless', help='Headless mode', action='store_true')
-
-  if len(sys.argv) == 1:
-    print(parser.format_help())
-    exit()
-
-  args, unknown = parser.parse_known_args()
-
-  print(browse(
-    main.__name__,
-    functions =  [obj for name,obj in inspect.getmembers(sys.modules[__name__]) if (inspect.isfunction(obj) and obj.__module__ == __name__)],
-    remote = False,
-    headless = args.headless,
-    use_tor = False,
-    stealth = True,
-    proxy = args.proxy
-  ))
+  main()
