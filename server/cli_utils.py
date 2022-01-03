@@ -41,7 +41,7 @@ def browse(entry_function_name, functions, boto3_session = None, remote = False,
         return picklelib.loads(server.recieve({
             "invoked_func_name": entry_function_name,
             "codes": { function.__name__: (inspect.getsource(function), marshal.dumps(function.__code__)) for function in functions},
-            "arg": [],
+            "arg": sys.argv,
             "kw": {},
             "options": None
         }))

@@ -4,17 +4,15 @@ sys.path.append(os.path.abspath('./server'))
 from cli_utils import *
 import re
 
-def main(browser):
-  parser=argparse.ArgumentParser()
+def main(browser, *arg):
+  parser = argparse.ArgumentParser()
 
   parser.add_argument('--document', help='Source Google Document ID', required=True)
   parser.add_argument('--snapshot', help='Snapshot name', required=True)
   parser.add_argument('--email', help='Google account email', required=True)
   parser.add_argument('--password', help='Google account password', required=True)
-  parser.add_argument('--proxy', help='HTTPS proxy, format: [https://username:password@host:port]')
-  parser.add_argument('--headless', help='Headless mode', action='store_true')
 
-  args=parser.parse_args()
+  args, unknown = parser.parse_known_args(arg)
 
   document_id = browser.copy_document(
     args.email,
@@ -75,11 +73,6 @@ def copy_document(browser, email, password, document_id, new_name, copy_comments
 
 if __name__ == '__main__':
   parser=argparse.ArgumentParser()
-
-  parser.add_argument('--document', help='Source Google Document ID', required=True)
-  parser.add_argument('--snapshot', help='Snapshot name', required=True)
-  parser.add_argument('--email', help='Google account email', required=True)
-  parser.add_argument('--password', help='Google account password', required=True)
   parser.add_argument('--proxy', help='HTTPS proxy, format: [https://username:password@host:port]')
   parser.add_argument('--headless', help='Headless mode', action='store_true')
 
@@ -87,7 +80,7 @@ if __name__ == '__main__':
     print(parser.format_help())
     exit()
 
-  args=parser.parse_args()
+  args, unknown = parser.parse_known_args()
 
   print(browse(
     main.__name__,
