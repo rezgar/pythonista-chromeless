@@ -16,7 +16,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import WebDriverException
 from selenium_stealth import stealth
 
-sys.path.append(os.path.abspath('./client'))
+sys.path.append(os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client')))
 from client import Chromeless
 
 import inspect, marshal
