@@ -10,6 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import WebDriverException
 from selenium_stealth import stealth
 
 from picklelib import loads, dumps  # imports in Dockerfile
@@ -60,22 +62,23 @@ def invoke(dumped):
 
 class ChromelessServer():
     def __init__(self, headless = True, use_tor = False, proxy = None, stealth = True):
-        self.headless = headless
-        self.use_tor = use_tor
-        self.proxy = proxy
-        self.stealth = stealth
+      self.headless = headless
+      self.use_tor = use_tor
+      self.proxy = proxy
+      self.stealth = stealth
 
-    def gen_chrome(self, options, dirname):
-        if options is None:
-            options, seleniumwire_options = get_default_chrome_options(self, dirname)
+    def gen_chrome(self, dirname, options = None, seleniumwire_options = None):
+        default_options, default_seleniumwire_options = get_default_chrome_options(self, dirname)
+
+        options = options or default_options
+        seleniumwire_options = seleniumwire_options or default_seleniumwire_options
         
         chromedriver=ChromeDriverManager(path="/tmp/chromedriver").install()
 
         return webdriver.Chrome(chromedriver, options=options, seleniumwire_options = seleniumwire_options)
 
-    def gen_firefox(self, options, dirname):
-        if options is None:
-            options = get_default_firefox_options(self, dirname)
+    def gen_firefox(self, dirname, options):
+        options = options or get_default_firefox_options(self, dirname)
         
         geckodriver = GeckoDriverManager(path="/tmp/geckodriver").install()
         profile = webdriver.FirefoxProfile(profile_directory=dirname)
@@ -111,8 +114,9 @@ class ChromelessServer():
             codes = arguments["codes"]
             arg = arguments["arg"]
             kw = arguments["kw"]
-            options = arguments["options"]
-            browser = self.gen_chrome(options, dirname)
+            options = arguments.get("options")
+            seleniumwire_options = arguments.get("seleniumwire_options")
+            browser = self.gen_chrome(dirname, options, seleniumwire_options)
 
             if self.stealth:
                 stealth(browser,
@@ -158,6 +162,9 @@ def get_default_firefox_options(self, dirname):
     return firefox_options
 def get_default_chrome_options(self, dirname):
     options = webdriver.ChromeOptions()
+
+    options.set_capability('pageLoadStrategy', 'none')
+
     seleniumwire_options = {}
     
     if self.use_tor:

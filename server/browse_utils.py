@@ -23,7 +23,7 @@ import inspect, marshal
 import picklelib
 import types
 
-def browse(entry_function_name, functions, boto3_session = None, remote = False, **kwargs):
+def browse(entry_function_name, functions, boto3_session = None, remote = False, options = None, **kwargs):
     # Remote server
     if remote:
         browser = Chromeless(
@@ -43,5 +43,5 @@ def browse(entry_function_name, functions, boto3_session = None, remote = False,
             "codes": { function.__name__: (inspect.getsource(function), marshal.dumps(function.__code__)) for function in functions},
             "arg": sys.argv,
             "kw": {},
-            "options": None
+            "options": options
         }))

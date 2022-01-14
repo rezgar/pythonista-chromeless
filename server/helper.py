@@ -6,6 +6,24 @@ from selenium.common.exceptions import WebDriverException
 import re
 import time 
 
+def change_proxy(browser, proxy):
+   capabilities = browser.desired_capabilities['chrome'].copy()
+   capabilities['proxy'] = {
+    'http': proxy,
+    'https': proxy,
+    'no_proxy': 'localhost,127.0.0.1'
+   } if proxy else None
+   cookies = browser.get_cookies()
+   url = browser.current_url
+  
+   browser.start_session(capabilities)
+   browser.get(url)
+
+   for cookie in cookies:
+     browser.add_cookie(cookie)
+  
+   browser.get(url)
+
 def login_with_google(browser, email, password):
     selectors = {
         'email': 'input[type=email]',
