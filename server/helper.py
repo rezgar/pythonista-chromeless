@@ -15,12 +15,19 @@ def change_proxy(browser, proxy):
    } if proxy else None
    # https://chromedriver.chromium.org/capabilities
    # https://developers.perfectomobile.com/display/TT/How+to+pass+Chrome+options+as+capabilities
-   capabilities['goog:chromeOptions'] = browser.__dict__['options'].capabilities['goog:chromeOptions']
+   # If not set, tries to open UI browser in headless mode (doesn't respect properties)
+   capabilities['goog:chromeOptions'] = {
+     "args": [ arg for arg in browser.__dict__['options'].capabilities['goog:chromeOptions']['args'] if \
+        # If inherited, browsing continues in the original window without switching to new session
+        '/tmp/' not in arg and not arg.startswith('--remote-debugging-port')
+      ]
+   }
 
    cookies = browser.get_cookies()
    url = browser.current_url
   
-   browser.start_session(capabilities)
+   session = browser.start_session(capabilities)
+   browser.switch_to.default_content()
    browser.get(url)
 
    for cookie in cookies:
