@@ -199,13 +199,16 @@ def generate_session_options(self, dirname, options_override, seleniumwire_optio
   options = deepcopy(self.default_options)
   seleniumwire_options = deepcopy(self.default_seleniumwire_options)
 
-  options.add_argument(f"--user-data-dir={dirname}/user-data")
-  options.add_argument("--homedir=" + dirname)
-  options.add_argument(f"--data-path={dirname}/data-path")
-  options.add_argument(f"--disk-cache-dir={dirname}/cache-dir")
-  options.add_argument(f"--disk-cache-size=104857600")
-  options.add_argument(f"--profile-directory={dirname}/profile")
-  options.add_argument(f"--quarantine-dir={dirname}/quarantine")
+  # For some reason, order of the argumets matters. If profile argumets are appended at the end, they don't work in UI mode (ok in headless). We have to insert it specifically after "--enable-automation"
+  index = options.arguments.index("--enable-automation")
+
+  options.arguments.insert(index, f"--user-data-dir={dirname}/user-data")
+  options.arguments.insert(index, f"--homedir={dirname}")
+  options.arguments.insert(index, f"--data-path={dirname}/data-path")
+  options.arguments.insert(index, f"--disk-cache-dir={dirname}/cache-dir")
+  options.arguments.insert(index, f"--disk-cache-size=104857600")
+  options.arguments.insert(index, f"--profile-directory={dirname}/profile")
+  options.arguments.insert(index, f"--quarantine-dir={dirname}/quarantine")
 
   if options_override:
     for key in options_override:
