@@ -38,7 +38,7 @@ def browse(entry_function_name, functions, boto3_session = None, remote = False,
     else:
         server = ChromelessServer(**kwargs)
         
-        return picklelib.loads(server.recieve({
+        return picklelib.loads(server.receive({
             "invoked_func_name": entry_function_name,
             "codes": { function.__name__: (inspect.getsource(function), marshal.dumps(function.__code__)) for function in functions},
             "arg": sys.argv,

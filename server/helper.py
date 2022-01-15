@@ -4,7 +4,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import WebDriverException
 import re
-import time 
+import time
 
 def change_proxy(browser, proxy):
    capabilities = browser.desired_capabilities['chrome'].copy()
@@ -13,6 +13,10 @@ def change_proxy(browser, proxy):
     'https': proxy,
     'no_proxy': 'localhost,127.0.0.1'
    } if proxy else None
+   # https://chromedriver.chromium.org/capabilities
+   # https://developers.perfectomobile.com/display/TT/How+to+pass+Chrome+options+as+capabilities
+   capabilities['goog:chromeOptions'] = browser.__dict__['options'].capabilities['goog:chromeOptions']
+
    cookies = browser.get_cookies()
    url = browser.current_url
   
