@@ -1,0 +1,4 @@
+
+        [console_scripts]
+        copy-gdoc=cli.copy_gdoc:main
+    

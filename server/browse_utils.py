@@ -16,14 +16,14 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import WebDriverException
 from selenium_stealth import stealth
 
-sys.path.append(os.path.abspath('./client'))
+sys.path.append(os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client')))
 from client import Chromeless
 
 import inspect, marshal
 import picklelib
 import types
 
-def browse(entry_function_name, functions, boto3_session = None, remote = False, **kwargs):
+def browse(entry_function_name, functions, boto3_session = None, remote = False, options = None, **kwargs):
     # Remote server
     if remote:
         browser = Chromeless(
@@ -38,10 +38,10 @@ def browse(entry_function_name, functions, boto3_session = None, remote = False,
     else:
         server = ChromelessServer(**kwargs)
         
-        return picklelib.loads(server.recieve({
+        return picklelib.loads(server.receive({
             "invoked_func_name": entry_function_name,
             "codes": { function.__name__: (inspect.getsource(function), marshal.dumps(function.__code__)) for function in functions},
-            "arg": [],
+            "arg": sys.argv,
             "kw": {},
-            "options": None
+            "options": options
         }))
